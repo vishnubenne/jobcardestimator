@@ -3,7 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="CE Time Estimator", layout="centered")
 st.title("📋 Per-CE Time Estimator")
 
-st.markdown("This tool estimates the time required to process **one Combined Entity (CE)** based on work across Catalog, Content, and Media teams. QA TAT is not included.")
+st.markdown("This tool estimates the time required to process **one Combined Entity (CE)** based on work across Content and Media teams. Catalog time is fixed at 2 days.")
 
 st.markdown("---")
 st.header("🔢 Listing Types in this CE")
@@ -84,37 +84,8 @@ media_time = (
     itineraries * media_tat_map["Itinerary"]
 )
 
-# --- CATALOG TEAM ---
-st.markdown("---")
-st.header("📦 Catalog Team Tasks")
-
-catalog_tat_map = {
-    "New listing": 0.64,
-    "Multi vendor": 1.34,
-    "Multi variant": 0.97,
-    "Experience revamp": 0.48,
-    "New Listings Combo": 0.87,
-    "Price Change": 0.2,
-    "Pricing Discrepancy": 1.4,
-    "Product update request": 1.0,
-    "Meeting Point/Where Section": 1.5,
-    "My Tickets and Vouchers": 1.9,
-    "General Catalog": 0.4
-}
-
-catalog_inputs = {}
-st.markdown("#### Non-listing Fixes")
-for task in ["Price Change", "Pricing Discrepancy", "Product update request", "Meeting Point/Where Section", "My Tickets and Vouchers", "General Catalog"]:
-    catalog_inputs[task] = st.number_input(task, min_value=0, step=1, key=f"catalog_fix_{task}")
-
-catalog_time = (
-    new_listings * catalog_tat_map["New listing"] +
-    multi_vendors * catalog_tat_map["Multi vendor"] +
-    multi_variants * catalog_tat_map["Multi variant"] +
-    experience_revamps * catalog_tat_map["Experience revamp"] +
-    listing_combos * catalog_tat_map["New Listings Combo"] +
-    sum(catalog_inputs[task] * catalog_tat_map[task] for task in catalog_inputs)
-)
+# Fixed catalog time
+catalog_time = 2.0
 
 # --- FINAL OUTPUT ---
 st.markdown("---")
@@ -125,7 +96,7 @@ total_time_ce = catalog_time + parallel_time
 
 if st.button("Calculate Time for This CE"):
     st.subheader("🕒 Detailed Team Time")
-    st.write(f"Catalog Team: {round(catalog_time, 2)} days")
+    st.write(f"Catalog Team: {catalog_time} days (fixed)")
     st.write(f"Content Team: {round(content_total_time, 2)} days (includes listings + extras, adjusted for {writers_count} writer(s))")
     st.write(f"Media Team: {round(media_time, 2)} days")
     st.markdown("---")
