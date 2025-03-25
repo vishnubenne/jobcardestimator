@@ -24,6 +24,12 @@ total_listings = listing_combos + new_listings + multi_vendors + multi_variants 
 st.markdown("---")
 st.header("✍️ Content Team Inputs")
 
+st.markdown("""
+**🔧 Fix Definitions:**
+- **Quick Fix** = Typos, factual corrections, slight rephrasing, correcting a date or name, replacing a single broken link, minor formatting change (**~15 mins**)  
+- **Complex Fix** = Large updates requiring planning or coordination, such as new page creation, structural updates, variant additions, revamps, or redesigns (**~2 hours**)
+""")
+
 writers_count = st.number_input("How many writers are working in parallel?", min_value=1, step=1)
 
 # Always included
@@ -109,3 +115,4 @@ if st.button("Calculate Time for This CE"):
     st.write(f"Media Team: {round(media_time, 2)} days")
     st.markdown("---")
     st.subheader(f"🚀 **Total Time to Complete This CE: {round(total_time_ce, 2)} days**")
+
