@@ -9,18 +9,17 @@ st.markdown("This tool estimates the time required to process **one Combined Ent
 is_new_ce = st.checkbox("Is this a new CE?")
 
 st.markdown("---")
-st.header("📝 Listing Information")
+st.header("📝 Listing Types in this CE")
 
-include_listings = False
-if is_new_ce:
-    st.markdown("**For New CE:** Enter number of new listings")
-    listing_count = st.number_input("Number of new listings", min_value=0, step=1)
-    include_listings = True
-else:
-    include_listings = st.checkbox("Are there any new listings (e.g. multi-vendor, multi-variant)?")
-    listing_count = 0
-    if include_listings:
-        listing_count = st.number_input("Number of new listings in existing CE", min_value=0, step=1)
+# Collect listing type counts
+listing_combos = st.number_input("New Listings Combo", min_value=0, step=1)
+new_listings = st.number_input("New Listings", min_value=0, step=1)
+multi_vendors = st.number_input("Multi Vendors", min_value=0, step=1)
+multi_variants = st.number_input("Multi Variants", min_value=0, step=1)
+experience_revamps = st.number_input("Experience Revamps", min_value=0, step=1)
+
+# Total listings for reuse
+total_listings = listing_combos + new_listings + multi_vendors + multi_variants + experience_revamps
 
 st.markdown("---")
 st.header("✍️ Content Team Inputs")
@@ -30,11 +29,24 @@ writers_count = st.number_input("How many writers are working in parallel?", min
 # Always included
 RESEARCH_HOURS = 4
 
-# Listing content time based on avg full TAT in days
-LISTING_TAT_DAYS = 3.72  # You may adjust this to a more dynamic formula later
-listing_time = listing_count * LISTING_TAT_DAYS if include_listings else 0
+# Listing TATs in days (content team)
+content_listing_tat_days = {
+    "New Listings Combo": 4.12,
+    "New Listing": 3.72,
+    "Multivendor": 3.96,
+    "Multivariant": 2.48,
+    "Experience Revamp": 2.95
+}
 
-# Optional new CE components
+listing_time = (
+    listing_combos * content_listing_tat_days["New Listings Combo"] +
+    new_listings * content_listing_tat_days["New Listing"] +
+    multi_vendors * content_listing_tat_days["Multivendor"] +
+    multi_variants * content_listing_tat_days["Multivariant"] +
+    experience_revamps * content_listing_tat_days["Experience Revamp"]
+)
+
+# Additional CE-based content work (in hours)
 total_hours = RESEARCH_HOURS
 if is_new_ce:
     if st.checkbox("Include Landing Page?"):
@@ -68,12 +80,19 @@ media_tat_map = {
     "New Listings Combo": 1.64,
     "New Listing": 1.12,
     "Multivendor": 0.85,
-    "Experience Revamp": 1.19,
     "Multivariant": 0.89,
+    "Experience Revamp": 1.19,
     "Itinerary": 2
 }
 
-media_time = listing_count * media_tat_map["New Listing"] + itineraries * media_tat_map["Itinerary"]
+media_time = (
+    listing_combos * media_tat_map["New Listings Combo"] +
+    new_listings * media_tat_map["New Listing"] +
+    multi_vendors * media_tat_map["Multivendor"] +
+    multi_variants * media_tat_map["Multivariant"] +
+    experience_revamps * media_tat_map["Experience Revamp"] +
+    itineraries * media_tat_map["Itinerary"]
+)
 
 # --- FINAL OUTPUT ---
 st.markdown("---")
