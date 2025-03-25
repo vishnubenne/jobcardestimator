@@ -76,18 +76,18 @@ catalog_time = (
 st.markdown("---")
 st.header("🧠 Content Team Time Calculation")
 
-content_time = 4  # Research
+content_time_hours = 4  # Research
 if include_landing:
-    content_time += 4
+    content_time_hours += 4
 if include_poi:
-    content_time += 4
+    content_time_hours += 4
 if include_shoulder:
-    content_time += 2
-content_time += 2 * itineraries
-content_time += 0.25 * content_quick_fixes + 2 * content_complex_fixes
+    content_time_hours += 2
+content_time_hours += 2 * itineraries
+content_time_hours += 0.25 * content_quick_fixes + 2 * content_complex_fixes
 
-# Divide by number of writers
-content_time = content_time / writers_count if writers_count else content_time
+# Divide by number of writers and convert to days
+content_time = (content_time_hours / writers_count) / 8 if writers_count else content_time_hours / 8
 
 # --- FINAL OUTPUT ---
 st.markdown("---")
@@ -103,3 +103,4 @@ if st.button("Calculate Time for This CE"):
     st.write(f"Media Team: {round(media_time, 2)} days")
     st.markdown("---")
     st.subheader(f"🚀 **Total Time to Complete This CE: {round(total_time_ce, 2)} days**")
+
