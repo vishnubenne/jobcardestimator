@@ -1,92 +1,102 @@
 import streamlit as st
 
-# Issue types and time taken by each team (in hours)
-content_issues = {
-    "MMP with 5–7 listings": 20,
-    "Landing Page": 20,
-    "Shoulder Page": 12,
-    "Automated Shoulder Page": 4,
-    "Itinerary for 5–7 NLS": 8,
-    "Research for new CE": 4,
-    "MMP listings (6)": 12,
-    "POI Content Table": 4,
-    "Shoulder Pages (4 + STL + Guided)": 12,
-    "Itinerary for MMP (6 listings) – NOT HOHO": 12,
-    "Quick Fixes": 0.25,
-    "Complex Fixes": 2,
-    "Edits/Changes/Marketing Edits": 4
+st.set_page_config(page_title="CE Weekly Planner", layout="centered")
+st.title("🗓️ CE Weekly Time Estimator")
+st.markdown("Efficiently plan and estimate your weekly bandwidth by CE and team")
+
+# --- INPUT SECTION ---
+
+num_ces = st.number_input("🔢 How many Combined Entities (CEs) are you working on this week?", min_value=1, step=1)
+
+st.markdown("---")
+st.header("✍️ Content Team (per CE)")
+
+content_itineraries_per_ce = st.number_input("How many itineraries per CE?", min_value=0, step=1)
+content_quick_fixes = st.number_input("Quick Fixes (across all CEs)", min_value=0, step=1)
+content_complex_fixes = st.number_input("Complex Fixes (across all CEs)", min_value=0, step=1)
+
+# Content time per CE (excluding overlapping edits)
+def calculate_content_time_per_ce(itineraries):
+    return 4 + 4 + 4 + 2 + (2 * itineraries)  # research + landing + POI + shoulder + itinerary
+
+# Fixes (outside CE structure)
+def calculate_content_fixes_time(quick, complex):
+    return (quick * 0.25) + (complex * 2)
+
+# --- MEDIA TEAM ---
+st.markdown("---")
+st.header("🖼 Media Team (per CE)")
+
+media_new_listings_combo = st.number_input("New Listings Combo", min_value=0, step=1)
+media_new_listings = st.number_input("New Listing", min_value=0, step=1)
+media_multivendor = st.number_input("Multivendor", min_value=0, step=1)
+media_experience_revamp = st.number_input("Experience Revamp", min_value=0, step=1)
+media_multivariant = st.number_input("Multivariant", min_value=0, step=1)
+media_qa_fixes = st.number_input("QA Fixes", min_value=0, step=1)
+media_itineraries = st.number_input("# of Itinerary tickets", min_value=0, step=1)
+
+media_tat_map = {
+    "New Listings Combo": 1.64,
+    "New Listing": 1.12,
+    "Multivendor": 0.85,
+    "Experience Revamp": 1.19,
+    "Multivariant": 0.89,
+    "QA Fixes": 0.5,
+    "Itinerary": 2
 }
 
-catalog_issues = {
-    "New listing": 8,
-    "Multi vendor": 13.6,
-    "Multi variant": 9.6,
-    "Experience revamp": 4,
-    "Price Change": 1.6,
-    "Pricing Discrepancy": 11.2,
-    "Product update request": 8,
-    "Meeting Point/Where Section": 12,
-    "Experience Unavailable": 64,
-    "External Email": 24,
-    "My Tickets and Vouchers": 15.2,
-    "General Catalog": 3.2
+media_total = (
+    media_new_listings_combo * media_tat_map["New Listings Combo"] +
+    media_new_listings * media_tat_map["New Listing"] +
+    media_multivendor * media_tat_map["Multivendor"] +
+    media_experience_revamp * media_tat_map["Experience Revamp"] +
+    media_multivariant * media_tat_map["Multivariant"] +
+    media_qa_fixes * media_tat_map["QA Fixes"] +
+    media_itineraries * media_tat_map["Itinerary"]
+)
+
+# --- CATALOG TEAM ---
+st.markdown("---")
+st.header("📦 Catalog Team Tasks")
+
+catalog_inputs = {}
+catalog_tat_days = {
+    "New listing": 0.64,
+    "Multi vendor": 1.34,
+    "Multi variant": 0.97,
+    "Experience revamp": 0.48,
+    "Price Change": 0.2,
+    "Pricing Discrepancy": 1.4,
+    "Product update request": 1,
+    "Meeting Point/Where Section": 1.5,
+    "Experience Unavailable": 8,
+    "External Email": 3,
+    "My Tickets and Vouchers": 1.9,
+    "General Catalog": 0.4
 }
 
-media_issues = {
-    "Research of all images": 4,
-    "MMP revamp of existing (6 listings)": 12,
-    "MMP launch for 6 new listings": 16,
-    "MB Banner": 0.17,
-    "Collection Banner": 0.17,
-    "Landing Page": 2,
-    "Itinerary for MMP (6 listings) – NOT HOHO": 10,
-    "Itinerary for 6 NLS (HOHO)": 16,
-    "POI Table Media": 1,
-    "Lead QA": 1,
-    "Changes post QA": 4
-}
+for task in catalog_tat_days:
+    catalog_inputs[task] = st.number_input(task, min_value=0, step=1, key=f"catalog_{task}")
 
-qa_issues = {
-    "New Listing": 16,
-    "Multivendor": 16,
-    "Multivariant": 16,
-    "Revamp": 16,
-    "Combos": 16,
-    "Shows (LTT/ Broadway)": 16
-}
+catalog_total = sum([catalog_inputs[task] * catalog_tat_days[task] for task in catalog_inputs])
 
-def calculate_total_time(issue_dict, selected_issues):
-    total = 0
-    for issue, count in selected_issues.items():
-        if issue in issue_dict:
-            total += issue_dict[issue] * count
-    return total
-
-st.title("Job Card Time Estimator")
-
-st.header("Content Team Tasks")
-content_selected = {issue: st.number_input(f"{issue}", min_value=0, step=1, key=f"content_{issue}") for issue in content_issues}
-
-st.header("Catalog Team Tasks")
-catalog_selected = {issue: st.number_input(f"{issue}", min_value=0, step=1, key=f"catalog_{issue}") for issue in catalog_issues}
-
-st.header("Media Team Tasks")
-media_selected = {issue: st.number_input(f"{issue}", min_value=0, step=1, key=f"media_{issue}") for issue in media_issues}
-
-st.header("IO/QA Team Tasks")
-qa_selected = {issue: st.number_input(f"{issue}", min_value=0, step=1, key=f"qa_{issue}") for issue in qa_issues}
+# --- OUTPUT ---
+st.markdown("---")
+st.header("📊 Weekly Summary")
 
 if st.button("Calculate Total Time"):
-    total_content = calculate_total_time(content_issues, content_selected)
-    total_catalog = calculate_total_time(catalog_issues, catalog_selected)
-    total_media = calculate_total_time(media_issues, media_selected)
-    total_qa = calculate_total_time(qa_issues, qa_selected)
-    grand_total = total_content + total_catalog + total_media + total_qa
+    content_total_per_ce = calculate_content_time_per_ce(content_itineraries_per_ce)
+    content_total = content_total_per_ce * num_ces + calculate_content_fixes_time(content_quick_fixes, content_complex_fixes)
 
-    st.subheader("Time Estimates (in hours)")
-    st.write(f"Content Team: {total_content} hours")
-    st.write(f"Catalog Team: {total_catalog} hours")
-    st.write(f"Media Team: {total_media} hours")
-    st.write(f"IO/QA Team: {total_qa} hours")
-    st.markdown(f"### Grand Total: {grand_total} hours")
+    media_time_per_ce = media_total / num_ces if num_ces else 0
+    parallel_ce_time = max(content_total_per_ce, media_time_per_ce)
+    total_time_per_ce = parallel_ce_time + (catalog_total / num_ces if num_ces else 0)
+    total_time_all_ces = total_time_per_ce * num_ces
 
+    st.subheader("⏱️ Time Estimates (in days)")
+    st.write(f"Content Team: {round(content_total, 2)} days")
+    st.write(f"Media Team: {round(media_total, 2)} days")
+    st.write(f"Catalog Team: {round(catalog_total, 2)} days")
+    st.write(f"---")
+    st.write(f"Average Time to Complete 1 CE: **{round(total_time_per_ce, 2)} days**")
+    st.write(f"Total Time for {num_ces} CEs: **{round(total_time_all_ces, 2)} days**")
