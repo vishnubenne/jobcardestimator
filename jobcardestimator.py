@@ -1,17 +1,20 @@
 import streamlit as st
+from datetime import datetime, timedelta
+import pandas as pd
 
 st.set_page_config(page_title="CE Time Estimator", layout="centered")
 st.title("📋 Per-CE Time Estimator")
 
-st.markdown("This tool estimates the time required to process **one Combined Entity (CE)** based on work across Content and Media teams. QA TAT is not included. Catalog effort is considered fixed at 2 days.")
+st.markdown("This tool estimates the time required to process **one Combined Entity (CE)** across Content, Media, and Catalog teams. Weekends are included in timeline estimation but not counted as working days.")
 
 # --- CE TYPE ---
 is_new_ce = st.checkbox("Is this a new CE?")
 
+handover_date = st.date_input("📅 Handover Date from BizOps")
+
 st.markdown("---")
 st.header("📝 Listing Types in this CE")
 
-# Collect listing type counts
 listing_combos = st.number_input("New Listings Combo", min_value=0, step=1)
 new_listings = st.number_input("New Listings", min_value=0, step=1)
 multi_vendors = st.number_input("Multi Vendors", min_value=0, step=1)
@@ -35,21 +38,21 @@ writers_count = st.number_input("How many writers are working in parallel?", min
 # Always included
 RESEARCH_HOURS = 4
 
-# Listing TATs in days (content team)
-content_listing_tat_days = {
-    "New Listings Combo": 4.12,
-    "New Listing": 3.72,
-    "Multivendor": 3.96,
-    "Multivariant": 2.48,
-    "Experience Revamp": 2.95
+# Updated content listing TATs (in hours)
+content_listing_tat_hours = {
+    "New Listings Combo": 2,
+    "New Listing": 3,
+    "Multivendor": 1,
+    "Multivariant": 2,
+    "Experience Revamp": 2
 }
 
-listing_time = (
-    listing_combos * content_listing_tat_days["New Listings Combo"] +
-    new_listings * content_listing_tat_days["New Listing"] +
-    multi_vendors * content_listing_tat_days["Multivendor"] +
-    multi_variants * content_listing_tat_days["Multivariant"] +
-    experience_revamps * content_listing_tat_days["Experience Revamp"]
+listing_hours = (
+    listing_combos * content_listing_tat_hours["New Listings Combo"] +
+    new_listings * content_listing_tat_hours["New Listing"] +
+    multi_vendors * content_listing_tat_hours["Multivendor"] +
+    multi_variants * content_listing_tat_hours["Multivariant"] +
+    experience_revamps * content_listing_tat_hours["Experience Revamp"]
 )
 
 # Additional CE-based content work (in hours)
@@ -74,9 +77,8 @@ else:
 itineraries = st.number_input("Number of Itineraries", min_value=0, step=1)
 total_hours += itineraries * 2
 
-# Convert to days and adjust for writer parallelism
-additional_content_time = (total_hours / writers_count) / 8
-content_total_time = listing_time + additional_content_time
+# Convert to days
+total_content_days = (listing_hours / 8) + ((total_hours / writers_count) / 8)
 
 # --- MEDIA TEAM ---
 st.markdown("---")
@@ -105,14 +107,32 @@ st.markdown("---")
 st.header("📊 Time Summary for This CE")
 
 catalog_time = 2.0
-parallel_time = max(content_total_time, media_time)
+src_time = 1.0
+assignment_lag = 1.0
+
+parallel_time = max(total_content_days, media_time)
 total_time_ce = catalog_time + parallel_time
 
+def add_working_days(start_date, work_days):
+    current = start_date
+    days_added = 0
+    while days_added < work_days:
+        current += timedelta(days=1)
+        if current.weekday() < 5:  # Monday to Friday
+            days_added += 1
+    return current
+
 if st.button("Calculate Time for This CE"):
+    content_start_date = add_working_days(handover_date, int(src_time + catalog_time + assignment_lag))
+    ce_end_date = add_working_days(content_start_date, int(total_time_ce))
+
     st.subheader("🕒 Detailed Team Time")
     st.write(f"Catalog Team: {catalog_time} days (fixed)")
-    st.write(f"Content Team: {round(content_total_time, 2)} days (includes listings + components, adjusted for {writers_count} writer(s))")
+    st.write(f"Content Team: {round(total_content_days, 2)} days (adjusted for {writers_count} writer(s))")
     st.write(f"Media Team: {round(media_time, 2)} days")
     st.markdown("---")
-    st.subheader(f"🚀 **Total Time to Complete This CE: {round(total_time_ce, 2)} days**")
+    st.subheader(f"📅 Estimated Dates")
+    st.write(f"Content Start Date: {content_start_date.strftime('%A, %d %B %Y')}")
+    st.write(f"Estimated Completion Date: {ce_end_date.strftime('%A, %d %B %Y')}")
+    st.subheader(f"🚀 Total Time to Complete This CE: {round(total_time_ce, 2)} working days")
 
