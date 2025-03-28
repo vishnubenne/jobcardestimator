@@ -84,23 +84,9 @@ total_content_days = (listing_hours / 8) + ((total_hours / writers_count) / 8)
 st.markdown("---")
 st.header("🖼 Media Team Tasks (Auto Calculated)")
 
-media_tat_map = {
-    "New Listings Combo": 1.64,
-    "New Listing": 1.12,
-    "Multivendor": 0.85,
-    "Multivariant": 0.89,
-    "Experience Revamp": 1.19,
-    "Itinerary": 2
-}
-
-media_time = (
-    listing_combos * media_tat_map["New Listings Combo"] +
-    new_listings * media_tat_map["New Listing"] +
-    multi_vendors * media_tat_map["Multivendor"] +
-    multi_variants * media_tat_map["Multivariant"] +
-    experience_revamps * media_tat_map["Experience Revamp"] +
-    itineraries * media_tat_map["Itinerary"]
-)
+# Updated: All media tasks take 2 hours per listing type
+media_hours = 2 * (listing_combos + new_listings + multi_vendors + multi_variants + experience_revamps + itineraries)
+media_time = media_hours / 8  # convert to days
 
 # --- FINAL OUTPUT ---
 st.markdown("---")
@@ -131,7 +117,7 @@ if st.button("Calculate Time for This CE"):
     st.write(f"Content Team: {round(total_content_days, 2)} days (adjusted for {writers_count} writer(s))")
     st.write(f"Media Team: {round(media_time, 2)} days")
     st.markdown("---")
-    st.subheader(f"📅 Estimated Dates")
+    st.subheader("📅 Estimated Dates")
     st.write(f"Content Start Date: {content_start_date.strftime('%A, %d %B %Y')}")
     st.write(f"Estimated Completion Date: {ce_end_date.strftime('%A, %d %B %Y')}")
     st.subheader(f"🚀 Total Time to Complete This CE: {round(total_time_ce, 2)} working days")
